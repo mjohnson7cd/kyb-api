@@ -1,0 +1,703 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "European Company Registry & KYB API",
+    "description": "Resolve company names or national registry IDs into clean, normalized records pulled **directly from official government registries** across Europe. Covers France (INSEE/RNE), Norway (Br\u00f8nn\u00f8ysund), Finland (PRH/YTJ), and Czechia (ARES), plus EU VAT validation (VIES) and LEI lookup (GLEIF). Authenticate via `X-API-Key` or `X-RapidAPI-Proxy-Secret` header.",
+    "version": "1.0.0",
+    "x-logo": {
+      "url": "https://example.com/logo.png",
+      "altText": "KYB API Logo"
+    }
+  },
+  "paths": {
+    "/kyb/lookup": {
+      "post": {
+        "tags": [
+          "KYB Lookup"
+        ],
+        "summary": "Batch Lookup",
+        "description": "Batch company lookup by name or national registry ID.\n\nFetches data directly from official government registries across Europe:\n- France: INSEE / RNE (SIREN)\n- Norway: Br\u00f8nn\u00f8ysund (Org.nr)\n- Finland: PRH / YTJ (Y-tunnus)\n- Czechia: ARES (I\u010cO)\n\nPlus EU VAT validation (VIES) and LEI lookup (GLEIF).",
+        "operationId": "batch_lookup_kyb_lookup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kyb/company/{country}/{company_id}": {
+      "get": {
+        "tags": [
+          "KYB Lookup"
+        ],
+        "summary": "Single Lookup",
+        "description": "Lookup a single company by country and national registry ID.\n\nExample:\n- GET /kyb/company/FR/552032534  (Danone)\n- GET /kyb/company/NO/916385699  (Equinor)\n- GET /kyb/company/FI/0112038-9  (Nokia)",
+        "operationId": "single_lookup_kyb_company__country___company_id__get",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Country"
+            }
+          },
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "validate_vat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Check VAT number via EU VIES",
+              "default": true,
+              "title": "Validate Vat"
+            },
+            "description": "Check VAT number via EU VIES"
+          },
+          {
+            "name": "lookup_lei",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Fetch LEI from GLEIF",
+              "default": true,
+              "title": "Lookup Lei"
+            },
+            "description": "Fetch LEI from GLEIF"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyRecord"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Address": {
+        "properties": {
+          "street": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Street"
+          },
+          "postal_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "country_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country Code"
+          },
+          "formatted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formatted"
+          }
+        },
+        "type": "object",
+        "title": "Address",
+        "description": "Company address."
+      },
+      "CompanyRecord": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "matched": {
+            "type": "boolean",
+            "title": "Matched"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          },
+          "company_id_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id Type"
+          },
+          "legal_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Name"
+          },
+          "previous_names": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Names"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "legal_form": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legal Form"
+          },
+          "registration_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration Date"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Address"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "industry_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IndustryCode"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry Codes"
+          },
+          "employee_range": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee Range"
+          },
+          "financials": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Financials"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vat_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Number"
+          },
+          "vat_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Valid"
+          },
+          "lei": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lei"
+          },
+          "lei_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lei Status"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "matched"
+        ],
+        "title": "CompanyRecord",
+        "description": "Normalized company record."
+      },
+      "Financials": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revenue"
+          },
+          "net_income": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Net Income"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "EUR"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year"
+        ],
+        "title": "Financials",
+        "description": "Financial data (France only)."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IndustryCode": {
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "title": "Scheme"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scheme",
+          "code"
+        ],
+        "title": "IndustryCode",
+        "description": "Industry classification code."
+      },
+      "LookupRequest": {
+        "properties": {
+          "search_terms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Search Terms",
+            "description": "Company names or national registry IDs",
+            "examples": [
+              [
+                "Danone",
+                "Equinor",
+                "0112038-9",
+                "04788290"
+              ]
+            ]
+          },
+          "countries": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Countries",
+            "description": "ISO 3166-1 alpha-2 country codes (FR, NO, FI, CZ). If omitted, searches all.",
+            "examples": [
+              [
+                "FR",
+                "NO",
+                "FI",
+                "CZ"
+              ]
+            ]
+          },
+          "max_results_per_query": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Max Results Per Query",
+            "description": "Maximum results per search term (1-20)",
+            "default": 5
+          },
+          "validate_vat": {
+            "type": "boolean",
+            "title": "Validate Vat",
+            "description": "Check VAT numbers via EU VIES",
+            "default": true
+          },
+          "lookup_lei": {
+            "type": "boolean",
+            "title": "Lookup Lei",
+            "description": "Fetch LEI (Legal Entity Identifier) from GLEIF",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "search_terms"
+        ],
+        "title": "LookupRequest",
+        "description": "Batch company lookup request."
+      },
+      "LookupResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyRecord"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "total_matches": {
+            "type": "integer",
+            "title": "Total Matches"
+          },
+          "total_queries": {
+            "type": "integer",
+            "title": "Total Queries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total_matches",
+          "total_queries"
+        ],
+        "title": "LookupResponse",
+        "description": "Batch lookup response."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "RapidAPI": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-RapidAPI-Proxy-Secret",
+        "description": "RapidAPI proxy secret (automatically set by RapidAPI)"
+      },
+      "APIKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Custom API key for direct access"
+      }
+    }
+  },
+  "security": [
+    {
+      "RapidAPI": []
+    },
+    {
+      "APIKey": []
+    }
+  ]
+}
